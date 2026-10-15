@@ -1,4 +1,3 @@
-use clap::builder::Str;
 use color_eyre::eyre::eyre;
 use serde::Deserialize;
 
@@ -8,6 +7,7 @@ use crate::profile::ProfileConfig;
 pub struct ProjectConfig {
     pub profile: String,
     pub output: String,
+    #[serde(default = "UrsylaConfig::default_input")]
     pub input: String,
 }
 
@@ -16,10 +16,13 @@ pub struct UrsylaConfig {
     pub project: ProjectConfig,
 }
 impl UrsylaConfig {
+    pub fn default_input() -> String {
+        "src/main.slx".to_string()
+    }
     pub fn empty() -> Self {
         Self {
             project: ProjectConfig {
-                input: String::new(),
+                input: Self::default_input(),
                 profile: String::new(),
                 output: String::new(),
             },

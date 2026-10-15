@@ -57,7 +57,7 @@ fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
     let arguments = CliArguments::parse();
     let current_dir = std::env::current_dir()?;
-    let (profile, mut project_config) = if arguments.exec {
+    let (profile, project_config) = if arguments.exec {
         let config = get_config(&current_dir)?;
         (config.get_profile()?, config)
     } else {
@@ -73,11 +73,7 @@ fn main() -> color_eyre::Result<()> {
 
         (empty.get_profile()?, empty)
     };
-    if let Some(input) = arguments.input {
-        project_config.project.input = input;
-    } else if project_config.project.input.is_empty() {
-        project_config.project.input.push_str("src/main.slx");
-    }
+
     let status = run(&current_dir, profile, project_config)?;
     std::process::exit(status.code().unwrap_or(1));
 }
