@@ -1,3 +1,4 @@
+use clap::builder::Str;
 use color_eyre::eyre::eyre;
 use serde::Deserialize;
 
@@ -7,6 +8,7 @@ use crate::profile::ProfileConfig;
 pub struct ProjectConfig {
     pub profile: String,
     pub output: String,
+    pub input: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -17,6 +19,7 @@ impl UrsylaConfig {
     pub fn empty() -> Self {
         Self {
             project: ProjectConfig {
+                input: String::new(),
                 profile: String::new(),
                 output: String::new(),
             },
@@ -27,6 +30,7 @@ impl UrsylaConfig {
         Self {
             project: ProjectConfig {
                 profile,
+                input: self.project.input,
                 output: self.project.output,
             },
         }
@@ -37,9 +41,11 @@ impl UrsylaConfig {
             project: ProjectConfig {
                 profile: self.project.profile,
                 output,
+                input: self.project.input,
             },
         }
     }
+
     pub fn get_profile(&self) -> color_eyre::Result<ProfileConfig> {
         let home = std::env::home_dir().ok_or(eyre!("Should contain home folder"))?;
         let file = home.join(format!(".config/ursyla/{}.toml", self.project.profile));
