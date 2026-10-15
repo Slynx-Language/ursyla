@@ -5,7 +5,6 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct BinaryConfig {
     pub target: String,
-    pub output_flag: String,
     pub arguments: HashMap<String, String>,
     pub flags: Vec<String>,
 }
