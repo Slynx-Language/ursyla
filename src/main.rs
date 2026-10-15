@@ -5,7 +5,10 @@ use std::{path::Path, process::ExitStatus};
 
 use clap::Parser;
 
-use crate::{profile::ProfileConfig, ursyla::UrsylaConfig};
+use crate::{
+    profile::ProfileConfig,
+    ursyla::{ProjectConfig, UrsylaConfig},
+};
 
 fn get_config(current_dir: &Path) -> color_eyre::Result<UrsylaConfig> {
     let file = current_dir.join("ursyla.toml");
@@ -21,21 +24,28 @@ pub struct CliArguments {
     profile: Option<String>,
     #[arg(long, required_unless_present = "exec")]
     target: Option<String>,
+    #[arg(long, required_unless_present = "exec")]
+    output: Option<String>,
 }
 
-fn run(entry: &Path, profile: ProfileConfig) -> color_eyre::Result<ExitStatus> {
+fn run(
+    entry: &Path,
+    profile: ProfileConfig,
+    project_config: UrsylaConfig,
+) -> color_eyre::Result<ExitStatus> {
     let entry_source = entry.join("src/main.slx");
-    let mut child = std::process::Command::new(profile.binary.target);
-    let target_parameter = profile
-        .binary
-        .arguments
-        .get("target")
-        .map(|s| s.as_str())
-        .unwrap_or("target");
-    child.arg(format!(
-        "--{target_parameter}={}",
-        entry_source.display().to_string()
-    ));
+    let mut child = std::process::Command::new(&profile.binary.target);
+    let target_parameter = profile.argument_replacement_for("target");
+    let output_parameter = profile.argument_replacement_for("output");
+    child
+        .arg(format!(
+            "--{target_parameter}={}",
+            entry_source.display().to_string()
+        ))
+        .arg(format!(
+            "--{output_parameter}={}",
+            project_config.project.output
+        ));
     let mut child = child.spawn()?;
     let out = child.wait()?;
     Ok(out)
@@ -45,15 +55,21 @@ fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
     let arguments = CliArguments::parse();
     let current_dir = std::env::current_dir()?;
-    let profile = if arguments.exec {
+    let (profile, project_config) = if arguments.exec {
         let config = get_config(&current_dir)?;
-        config.get_profile()?
+        (config.get_profile()?, config)
     } else {
         let profile = arguments
             .profile
             .expect("Should provide profile since not running with 'run'");
-        UrsylaConfig::empty().with_profile(profile).get_profile()?
+        let output = arguments
+            .output
+            .expect("Should provide output since not runnign with 'run'");
+        let empty = UrsylaConfig::empty()
+            .with_profile(profile)
+            .with_output(output);
+        (empty.get_profile()?, empty)
     };
-    let status = run(&current_dir, profile)?;
+    let status = run(&current_dir, profile, project_config)?;
     std::process::exit(status.code().unwrap_or(1));
 }
