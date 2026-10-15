@@ -30,7 +30,9 @@ impl UrsylaConfig {
     pub fn get_profile(&self) -> color_eyre::Result<ProfileConfig> {
         let home = std::env::home_dir().ok_or(eyre!("Should contain home folder"))?;
         let file = home.join(format!(".config/ursyla/{}.toml", self.project.profile));
-        let toml = toml::from_str(&std::fs::read_to_string(file)?)?;
+        let content = std::fs::read_to_string(file)
+            .map_err(|_| eyre!("Could not find profile '{}'", self.project.profile))?;
+        let toml = toml::from_str(&content)?;
         Ok(toml)
     }
 }
