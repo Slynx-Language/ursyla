@@ -29,7 +29,7 @@ impl Invocation {
         Ok(Self {
             program: config
                 .project
-                .target
+                .runner
                 .clone()
                 .unwrap_or_else(|| profile.binary.target.clone()),
             arguments: vec![
@@ -40,6 +40,8 @@ impl Invocation {
     }
 
     pub fn run(&self) -> color_eyre::Result<ExitStatus> {
+        println!("Oh o programa: {:?}", self.program);
+        println!("{:?}", self.arguments);
         Ok(std::process::Command::new(&self.program)
             .args(&self.arguments)
             .spawn()?
@@ -64,7 +66,7 @@ mod tests {
         config.project.merge(&ProjectFlags {
             profile: None,
             output: output.map(str::to_string),
-            target: None,
+            runner: None,
             input: None,
         });
         config
@@ -87,12 +89,12 @@ mod tests {
     }
 
     #[test]
-    fn the_config_overwrites_the_target_and_the_entry_of_the_profile() {
+    fn the_config_overwrites_the_runner_and_the_entry_of_the_profile() {
         let mut config = config(Some("dist/out.js"));
         config.project.merge(&ProjectFlags {
             profile: None,
             output: None,
-            target: Some("other-backend".to_string()),
+            runner: Some("other-backend".to_string()),
             input: Some("src/lib.slx".to_string()),
         });
         let invocation = Invocation::build(Path::new("/project"), &config, &profile()).unwrap();

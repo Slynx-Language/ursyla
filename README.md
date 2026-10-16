@@ -21,12 +21,12 @@ command line. The command line always wins.
 ```
 ursyla --exec                      # ursyla.toml as it is
 ursyla --exec --output dist/a.js   # ursyla.toml, but a different output
-ursyla --profile js --target slynx-to-js --output a.js   # nothing read from disk
+ursyla --profile js --output a.js  # nothing read from disk
 ```
 
-Without `--exec` nothing is read from `ursyla.toml` and the three essential flags
-(`--profile`, `--target` and `--output`) have to be given. With `--exec` they come
-from the file instead.
+Without `--exec` nothing is read from `ursyla.toml` and the two essential flags
+(`--profile` and `--output`) have to be given. With `--exec` they come from the
+file instead.
 
 Where a value can come from more than one place, the order is:
 
@@ -34,17 +34,20 @@ Where a value can come from more than one place, the order is:
 | ------ | ---------------------------- | --------------------------- | ------------------------------- |
 | output | `--output`                   | `project.output`            | required, ursyla stops          |
 | input  | `--input`                    | `project.input`             | `src/main.slx`                  |
-| target | `--target`                   | `project.target`            | `binary.target` of the profile  |
+| runner | `--runner`                   | `project.runner`            | `binary.target` of the profile  |
 | profile| `--profile`                  | `project.profile`           | required, ursyla stops          |
+
+`--runner` is only needed to compile with a binary other than the one the profile
+names, since the profile already carries it.
 
 ## ursyla.toml
 
 ```toml
 [project]
-profile = "js"          # ~/.config/ursyla/js.toml
-output = "dist/main.js" # where the result is written
-input = "src/main.slx"  # entry file, relative to the project root
-target = "slynx-to-js" # optional, the profile already has a binary
+profile = "js"           # ~/.config/ursyla/js.toml
+output = "dist/main.js"  # where the result is written
+input = "src/main.slx"   # entry file, relative to the project root
+runner = "slynx-to-js"   # optional, the profile already has a binary
 ```
 
 Every key is optional, and every key has a flag with the same name.
@@ -63,6 +66,8 @@ flags = []                       # read, but not passed to the binary yet
 `target` and `output` are the two arguments ursyla knows how to fill in, mapped
 through `arguments` and handed to the binary as `--target=<entry>` and
 `--output=<output>`. A name that is not in `arguments` is passed through as is.
+The `target` here is the input file of the backend, which is why the binary ursyla
+runs is called `runner` on the ursyla side.
 
 ## Adding an option
 
@@ -72,14 +77,13 @@ in `src/config.rs`:
 ```rust
 crate::ursyla_fields! {
     ProjectConfig, ProjectFlags {
-        /// Binary used to compile, defaults to the target of the profile
-        #[arg(required_unless_present = "exec")]
-        target: Option<String> = None,
+        /// Binary used to compile, defaults to the binary of the profile
+        runner: Option<String> = None,
     }
 }
 ```
 
-That single line is the option: it adds the key to `[project]`, the `--target` flag
+That single line is the option: it adds the key to `[project]`, the `--runner` flag
 with its help, and the rule that the flag overwrites the file. Adding an option
 never means touching another struct, and there is no way to add a key without also
 adding the flag.

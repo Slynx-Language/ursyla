@@ -23,16 +23,13 @@ mod tests {
     fn essentials_are_required_without_exec() {
         assert!(CliArguments::try_parse_from(["ursyla"]).is_err());
         assert!(CliArguments::try_parse_from(["ursyla", "--profile", "js"]).is_err());
-        assert!(
-            CliArguments::try_parse_from(["ursyla", "--profile", "js", "--output", "out.js"])
-                .is_err()
-        );
+        assert!(CliArguments::try_parse_from(["ursyla", "--output", "out.js"]).is_err());
 
         let cli = CliArguments::try_parse_from([
             "ursyla",
             "--profile",
             "js",
-            "--target",
+            "--runner",
             "slynx-to-js",
             "--output",
             "out.js",
@@ -41,9 +38,24 @@ mod tests {
 
         assert!(!cli.exec);
         assert_eq!(cli.project.profile.as_deref(), Some("js"));
-        assert_eq!(cli.project.target.as_deref(), Some("slynx-to-js"));
+        assert_eq!(cli.project.runner.as_deref(), Some("slynx-to-js"));
         assert_eq!(cli.project.output.as_deref(), Some("out.js"));
         assert_eq!(cli.project.input, None);
+    }
+
+    #[test]
+    fn the_profile_alone_is_enough_to_run() {
+        let cli = CliArguments::try_parse_from([
+            "ursyla",
+            "--profile",
+            "js",
+            "--output",
+            "out.js",
+        ])
+        .unwrap();
+
+        assert_eq!(cli.project.profile.as_deref(), Some("js"));
+        assert_eq!(cli.project.runner, None);
     }
 
     #[test]
@@ -52,7 +64,7 @@ mod tests {
 
         assert!(cli.exec);
         assert_eq!(cli.project.profile, None);
-        assert_eq!(cli.project.target, None);
+        assert_eq!(cli.project.runner, None);
         assert_eq!(cli.project.output, None);
         assert_eq!(cli.project.input, None);
     }

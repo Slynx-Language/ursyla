@@ -16,9 +16,8 @@ crate::ursyla_fields! {
         #[arg(required_unless_present = "exec", required_unless_present="list_profiles")]
         output: Option<String> = None,
 
-        /// Binary used to compile, defaults to the target of the profile
-        #[arg(required_unless_present = "exec", required_unless_present="list_profiles")]
-        target: Option<String> = None,
+        /// Binary used to compile, defaults to the binary of the profile
+        runner: Option<String> = None,
 
         /// Slynx entry file, relative to the project root
         input: Option<String> = Some(DEFAULT_INPUT.to_string()),
@@ -67,7 +66,7 @@ mod tests {
         assert_eq!(config.project.profile.as_deref(), Some("js"));
         assert_eq!(config.project.input.as_deref(), Some(DEFAULT_INPUT));
         assert_eq!(config.project.output, None);
-        assert_eq!(config.project.target, None);
+        assert_eq!(config.project.runner, None);
     }
 
     #[test]
@@ -79,7 +78,7 @@ mod tests {
         let flags = ProjectFlags {
             profile: None,
             output: Some("dist/out.js".to_string()),
-            target: Some("slynx-to-js".to_string()),
+            runner: Some("slynx-to-js".to_string()),
             input: None,
         };
 
@@ -88,7 +87,7 @@ mod tests {
         assert_eq!(config.project.profile.as_deref(), Some("js"));
         assert_eq!(config.project.input.as_deref(), Some("src/other.slx"));
         assert_eq!(config.project.output.as_deref(), Some("dist/out.js"));
-        assert_eq!(config.project.target.as_deref(), Some("slynx-to-js"));
+        assert_eq!(config.project.runner.as_deref(), Some("slynx-to-js"));
     }
 
     #[test]
